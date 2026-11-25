@@ -22,13 +22,12 @@
   }
 
   *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{ width:100%; height:100%; background:var(--ink); overflow:hidden; }
+  html,body{ height:100%; background:var(--ink); overflow:hidden; }
   body{ font-family:var(--font-he); color:#fff; position:relative; }
 
   /* ---------- 1440 × 1024 canvas, scaled to fit any screen ---------- */
   #app{
-    position:fixed; left:50vw; top:50vh; width:1440px; height:1024px;
-    transform:translate(-50%,-50%) scale(min(calc(100vw / 1440px),calc(100vh / 1024px)));
+    position:absolute; left:50%; top:50%; width:1440px; height:1024px;
     transform-origin:center center; overflow:hidden;
     border-radius:18px; box-shadow:0 30px 90px rgba(0,0,0,.6);
     background:#000;
@@ -426,13 +425,19 @@
     content:''; display:inline-block; width:7px; height:7px; border-radius:50%;
     background:var(--c); box-shadow:0 0 8px var(--c); margin-inline-end:9px; vertical-align:2px;
   }
-  .tag.label{
-    padding:9px 18px; direction:ltr; color:var(--ink);
-    background:linear-gradient(135deg, #fff 0%, var(--c) 100%); border-color:transparent;
-    font-family:var(--font-en); font-style:italic; font-weight:600; letter-spacing:.4px; font-size:17px;
+  /* person's name: big, above their traits */
+  .tag.name{
+    font-size:26px; font-weight:800; padding:10px 26px 11px; letter-spacing:.3px;
+    color:var(--ink); background:linear-gradient(135deg,#fff 0%,var(--c) 100%); border-color:transparent;
+    box-shadow:0 0 26px -4px var(--c), 0 10px 26px rgba(0,0,0,.45);
   }
-  .tag.label::before{ display:none; }
-  .tag.label small{ font-family:var(--font-he); font-style:normal; font-weight:500; font-size:12px; opacity:.75; margin-inline-start:8px; }
+  .tag.name::before{ display:none; }
+  /* cocktail name: right by the glass */
+  .tag.drink{
+    direction:ltr; font-family:var(--font-en); font-style:italic; font-weight:600; font-size:19px;
+    padding:8px 18px; color:#fff; background:rgba(20,14,10,.72); border:1.5px solid var(--c);
+  }
+  .tag.drink::before{ display:none; }
   .tag[data-p="emm"]{ --c:var(--espresso); }
   .tag[data-p="had"]{ --c:var(--sage); }
   .tag[data-p="ori"]{ --c:var(--amber); }
@@ -612,6 +617,31 @@
   .bubble.react{ font-size:20px; font-weight:800; padding:10px 18px; white-space:nowrap; }
   .bubble[data-p="emm"]{ --c:#e2b07a; } .bubble[data-p="had"]{ --c:#b9f2a8; } .bubble[data-p="ori"]{ --c:#ffbe62; }
 
+  .invite{
+    position:absolute; transform:translate(-50%,-100%) scale(.7); opacity:0; pointer-events:none; z-index:6;
+    display:flex; gap:6px; align-items:center; white-space:nowrap;
+    padding:7px 14px; border-radius:999px; font-size:15px; font-weight:700; color:#fff;
+    background:rgba(20,14,10,.7); border:1px solid rgba(255,220,170,.6);
+    box-shadow:0 0 18px rgba(255,190,110,.35); transition:opacity .35s ease, transform .4s ease;
+  }
+  .invite::after{ content:''; position:absolute; left:50%; bottom:-6px; width:10px; height:10px; margin-left:-5px;
+    background:inherit; border-right:1px solid rgba(255,220,170,.6); border-bottom:1px solid rgba(255,220,170,.6); transform:rotate(45deg); }
+  .invite.show{ opacity:1; transform:translate(-50%,-100%) scale(1); animation:inviteBob 1.6s ease-in-out .4s infinite; }
+  @keyframes inviteBob{ 50%{ transform:translate(-50%,-118%) scale(1); } }
+  .start-note{
+    position:absolute; left:50%; top:46px; z-index:8; pointer-events:none;
+    transform:translateX(-50%) translateY(-10px); opacity:0; white-space:nowrap;
+    padding:13px 26px; border-radius:999px; font-size:19px; font-weight:600; color:#fff;
+    background:rgba(20,14,10,.72); border:1px solid rgba(255,210,150,.55);
+    box-shadow:0 0 26px rgba(255,170,80,.35); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  #app.ready .start-note{ opacity:1; transform:translateX(-50%); transition-delay:.5s; animation:notePulse 2.4s ease-in-out 1.5s infinite; }
+  #app.ready .start-note.gone{ opacity:0; transform:translateX(-50%) translateY(-10px); animation:none; transition-delay:0s; }
+  @keyframes notePulse{ 50%{ box-shadow:0 0 38px rgba(255,170,80,.6); } }
+  /* the intro bartender is gone; only his arm pours during the interaction */
+  .bartender{ display:none !important; }
+
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ animation:none !important; }
   }
@@ -632,18 +662,18 @@
 
   <div class="camera">
     <div class="scene" id="scene">
-      <img class="layer-bw" src="image-01.jpg" alt="שלושה חברים יושבים על הבר בשחור-לבן, מול כוסות ריקות">
+      <img class="layer-bw" src="images/scene-before-bw.jpg" alt="שלושה חברים יושבים על הבר בשחור-לבן, מול כוסות ריקות">
       <!-- liquid in each glass -->
-      <img class="fill" data-p="emm" src="image-02.jpg" alt="">
-      <img class="fill" data-p="had" src="image-02.jpg" alt="">
+      <img class="fill" data-p="emm" src="images/scene-color.jpg" alt="">
+      <img class="fill" data-p="had" src="images/scene-color.jpg" alt="">
       <div class="fill fill-liquid" data-p="ori"></div>
       <!-- each friend in full colour. Stacking: Ori < Hadar (her hand reaches into his side) < Emmanuelle (her martini overlaps Hadar's sleeve). Ori and Hadar use copies with the other person's hand / glass removed. -->
-      <img class="person" data-p="ori" src="image-03.jpg" alt="אורי בז'קט ערב חגיגי, מחייך">
-      <img class="person" data-p="had" src="image-04.jpg" alt="הדר בתלבושת ערב חגיגית, צוחקת">
-      <img class="person-alt" data-p="had" src="image-05.jpg" alt="">
-      <img class="person" data-p="emm" src="image-02.jpg" alt="עימנואל בתלבושת ערב חגיגית, צוחקת">
+      <img class="person" data-p="ori" src="images/layer-ori.jpg" alt="אורי בז'קט ערב חגיגי, מחייך">
+      <img class="person" data-p="had" src="images/layer-hadar-with-hand.jpg" alt="הדר בתלבושת ערב חגיגית, צוחקת">
+      <img class="person-alt" data-p="had" src="images/layer-hadar.jpg" alt="">
+      <img class="person" data-p="emm" src="images/scene-color.jpg" alt="עימנואל בתלבושת ערב חגיגית, צוחקת">
       <!-- the whole bar, for the finale -->
-      <img class="layer-all" src="image-02.jpg" alt="">
+      <img class="layer-all" src="images/scene-color.jpg" alt="">
     </div>
     <div class="fx" id="fx" aria-hidden="true">
       <div class="aura a-emm"></div>
@@ -885,10 +915,10 @@
 
   <!-- ===== Chaser / toast scenes (wide framing) ===== -->
   <div class="toast-layers" id="toastLayers" aria-hidden="true">
-    <img data-t="chaser" src="image-06.jpg" alt="">
-    <img data-t="emm" src="image-07.jpg" alt="">
-    <img data-t="had" src="image-08.jpg" alt="">
-    <img data-t="ori" src="image-09.jpg" alt="">
+    <img data-t="chaser" src="images/toast-chasers.jpg" alt="">
+    <img data-t="emm" src="images/toast-emmanuelle.jpg" alt="">
+    <img data-t="had" src="images/toast-hadar.jpg" alt="">
+    <img data-t="ori" src="images/toast-ori.jpg" alt="">
   </div>
   <div class="bubbles" id="bubbles" aria-live="polite"></div>
   <div class="tzone" data-p="emm" role="button" aria-label="עימנואל מרימה לחיים"></div>
@@ -897,19 +927,22 @@
 
   <!-- ===== Trait badges (positions in % of the 1440×1024 canvas) ===== -->
   <div class="tags" id="tags" aria-live="polite">
-    <span class="tag label" data-p="emm" style="left:25.69%;top:6.05%;--delay:.15s">Baileys Espresso Martini <small>עימנואל</small></span>
+    <span class="tag name" data-p="emm" style="left:25.69%;top:6.05%;--delay:.1s">עימנואל</span>
+    <span class="tag drink" data-p="emm" style="left:39.31%;top:59.18%;--delay:.75s">Baileys Espresso Martini</span>
     <span class="tag" data-p="emm" style="left:12.15%;top:14.65%;--delay:.30s">מדליקה את האנרגיה</span>
     <span class="tag" data-p="emm" style="left:11.46%;top:26.37%;--delay:.40s">חמה ומקרבת</span>
     <span class="tag" data-p="emm" style="left:11.81%;top:38.09%;--delay:.50s">שמחה פנימית</span>
     <span class="tag" data-p="emm" style="left:11.81%;top:49.80%;--delay:.60s">קצב וכריזמה ממכרת</span>
 
-    <span class="tag label" data-p="had" style="left:53.47%;top:6.05%;--delay:.15s">Gin Jasmine <small>הדר</small></span>
+    <span class="tag name" data-p="had" style="left:53.47%;top:6.05%;--delay:.1s">הדר</span>
+    <span class="tag drink" data-p="had" style="left:57.64%;top:60.35%;--delay:.75s">Gin Jasmine</span>
     <span class="tag" data-p="had" style="left:41.67%;top:13.67%;--delay:.30s">מפיצה יצירתיות ורעננות</span>
     <span class="tag" data-p="had" style="left:70.14%;top:14.65%;--delay:.40s">חשיבה מחוץ לקופסה</span>
     <span class="tag" data-p="had" style="left:41.32%;top:27.34%;--delay:.50s">זרימה קלילה</span>
     <span class="tag" data-p="had" style="left:70.49%;top:27.34%;--delay:.60s">תשומת לב לפרטים</span>
 
-    <span class="tag label" data-p="ori" style="left:83.33%;top:3.32%;--delay:.15s">Old Fashioned <small>אורי</small></span>
+    <span class="tag name" data-p="ori" style="left:83.33%;top:5.08%;--delay:.1s">אורי</span>
+    <span class="tag drink" data-p="ori" style="left:86.81%;top:67.58%;--delay:.75s">Old Fashioned</span>
     <span class="tag" data-p="ori" style="left:72.22%;top:39.06%;--delay:.30s">מעניק עומק ונוכחות</span>
     <span class="tag" data-p="ori" style="left:93.06%;top:16.60%;--delay:.40s">איזון פנימי</span>
     <span class="tag" data-p="ori" style="left:92.36%;top:51.76%;--delay:.50s">נוכחות מקורקעת</span>
@@ -920,6 +953,8 @@
   <div class="zone z-emm" data-p="emm" role="button" tabindex="-1" aria-label="עימנואל — Baileys Espresso Martini"></div>
   <div class="zone z-had" data-p="had" role="button" tabindex="-1" aria-label="הדר — Gin Jasmine"></div>
   <div class="zone z-ori" data-p="ori" role="button" tabindex="-1" aria-label="אורי — Old Fashioned"></div>
+
+  <div class="start-note" id="startNote">🍸 מלאו את הקוקטייל כדי לגלות את כוח העל</div>
 
   <div class="finale" aria-live="polite">
     <h2>All powers mixed</h2>
@@ -933,7 +968,7 @@
       <p>כל אחד מביא לשולחן את הטעם שלו</p>
     </div>
     <div class="progress">
-      <div class="hint"><span class="dot"></span><span id="hintText">רחפו מעל אחד החברים — הברמן ימזוג לו</span></div>
+      <div class="hint"><span class="dot"></span><span id="hintText">רחפו מעל אחד החברים כדי שהברמן ימזוג לו</span></div>
       <div class="drinks">
         <span class="drink" data-p="emm">Espresso Martini</span>
         <span class="drink" data-p="had">Gin Jasmine</span>
@@ -969,6 +1004,7 @@
   const stream = document.getElementById('stream');
   const clickMe = document.getElementById('clickMe');
   const hintText = document.getElementById('hintText');
+  const startNote = document.getElementById('startNote');
   const W = 1440, H = 1024;
 
   if (!(window.CSS && CSS.registerProperty)) app.classList.add('no-prop');
@@ -976,10 +1012,10 @@
   /* ---- scale the fixed 1440×1024 canvas to the viewport ---- */
   let scale = 1;
   function fit(){
-    scale = Math.min(document.documentElement.clientWidth / W, document.documentElement.clientHeight / H);
+    scale = Math.min(window.innerWidth / W, window.innerHeight / H);
     app.style.transform = `translate(-50%,-50%) scale(${scale})`;
   }
-  window.addEventListener('resize', fit); window.addEventListener('load', fit); fit();
+  window.addEventListener('resize', fit); fit();
 
   /* =========================================================
      THE THREE FRIENDS
@@ -1063,6 +1099,20 @@
   hadAlt.classList.add('person');
   hadAlt.style.cssText = P.had.personEl.style.cssText;
   P.had.extra = [hadAlt];
+
+  // "pour me" invite above each empty glass (b&w position)
+  IDS.forEach(id => {
+    const p = P[id], c = document.createElement('div');
+    c.className = 'invite'; c.dataset.p = id;
+    c.innerHTML = '<span>🍸</span>מזגו לי';
+    c.style.left = p.bw[0] + 'px'; c.style.top = (p.bw[1] - 18) + 'px';
+    fx.appendChild(c); p.invite = c;
+  });
+  function refreshInvites(){
+    IDS.forEach(id => { const p = P[id];
+      p.invite.classList.toggle('show', ready && !p.done && p.level < 1 && hovered !== id && !p.pending); });
+  }
+  setInterval(refreshInvites, 150);
 
   /* traits start hidden "behind" their owner and fly out */
   document.querySelectorAll('.tag').forEach(t => {
@@ -1204,6 +1254,8 @@
     p.zone.classList.add('done');
     p.chip.classList.add('done');
     app.classList.add('done-' + id, 'any-done');
+    startNote.classList.add('gone');
+    p.invite.classList.remove('show');
     document.querySelector(`.menu-board li[data-p="${id}"]`)?.classList.add('revealed');   // stays revealed for the next visit to the door
 
     const b = document.createElement('div');
@@ -1309,7 +1361,8 @@
     app.classList.remove('any-done', 'all-done');
     delete app.dataset.focus;
     fx.querySelectorAll('.spark').forEach(s => s.remove());
-    hintText.textContent = 'רחפו מעל אחד החברים — הברמן ימזוג לו';
+    hintText.textContent = 'רחפו מעל אחד החברים כדי שהברמן ימזוג לו';
+    startNote.classList.remove('gone');
   }
 
 
@@ -1397,7 +1450,7 @@
      door click → doors swing open → camera dollies in behind
      the bartender → he turns right and leaves → grayscale scene
      ========================================================= */
-  const T_OPEN = 1300, T_PUSH = 3400, T_TURN = 1500;
+  const T_OPEN = 1300, T_PUSH = 3400, T_TURN = 0;
   let timers = [], ready = false;
 
   function setZonesFocusable(on){ IDS.forEach(id => P[id].zone.tabIndex = on ? 0 : -1); }
